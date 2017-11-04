@@ -5,6 +5,11 @@ if [[ $# -ne 1 ]]; then
 	exit 1
 fi
 
+if [[ "$1" != *.img ]]; then
+	echo "Filename needs to be .img"
+	exit 1
+fi
+
 set -xe
 
 if ! which rkdeveloptool &>/dev/null; then
@@ -29,5 +34,5 @@ for i in 1 2 3 4 5; do
 	sleep 1
 done
 
-rkdeveloptool wl 0 <(unxz -c "$1" | pv)
+rkdeveloptool wl 0 "$1"
 rkdeveloptool rd
