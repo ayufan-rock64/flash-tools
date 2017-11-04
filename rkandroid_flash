@@ -38,8 +38,22 @@ read_file() {
     fi
 }
 
-echo "Device info:"
-rkflashtool n
+if ! which rkdeveloptool &>/dev/null; then
+	cat <<EOF
+Please install rkdeveloptool and try again!
+
+git clone https://github.com/rockchip-linux/rkdeveloptool --depth=1 --single-branch"
+cd rkdeveloptool"
+./configure
+make
+sudo make install
+EOF
+fi
+
+wget -c https://github.com/ayufan-rock64/rkbin/raw/master/rk33/rk3328_loader_ddr786_v1.06.243.bin
+if ! rkdeveloptool rid; then
+	rkdeveloptool db rk3328_loader_ddr786_v1.06.243.bin
+fi
 
 echo "Updating device parameters..."
 read_file "parameter.txt" | rkflashtool P
