@@ -1,0 +1,54 @@
+#!/bin/bash
+
+set -eo pipefail
+
+message() {
+    echo "$@" 1>&2
+}
+
+if [[ $# -ne 1 && $# -ne 2 ]]; then
+    message "usage: $0 [folder or .zip] [install or update]"
+    exit 1
+fi
+
+FILE="$1"
+
+case $2 in
+    install|"")
+        PARTITIONS="uboot trust kernel boot recovery system misc"
+        ;;
+
+    update)
+        PARTITIONS="uboot trust kernel boot recovery system"
+        ;;
+
+    *)
+        message "Unknown mode: $2."
+        exit 1
+esac
+
+read_file() {
+    if [[ -d "$FILE" ]]; then
+        cat "$FILE/$1"
+    elif [[ -f "$FILE" ]]; then
+        unzip -p "$FILE" "$(basename "$FILE" .zip)/$1"
+    else
+        message "Invalid $FILE."
+        exit 1
+    fi
+}
+
+echo "Device info:"
+rkflashtool n
+
+echo "Updating device parameters..."
+read_file "parameter.txt" | rkflashtool P
+for i in ${PARTITIONS[@]}; do
+    echo "Updating $i partition..."
+    read_file "$i.img" | rkflashtool w $i
+done
+
+echo "Rebooting..." 
+rkflashtool b
+
+echo "Done."
